@@ -20,9 +20,7 @@ jobs:
       run: ./configure --with-mountvhd
     - name: make (server)
       run: make -j$((`nproc`+1))
-    - name: autoconf (client)
-      run: ./switch_build.sh client && autoreconf --install
-    - name: configure (client)
-      run: ./configure --enable-headless
-    - name: make (client)
-      run: make -j$((`nproc`+1))
+    - uses: actions/upload-artifact@v4
+      with: 
+        name: server-build
+        path: ./
