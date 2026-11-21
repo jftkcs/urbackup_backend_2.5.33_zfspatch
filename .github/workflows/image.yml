@@ -30,7 +30,7 @@ jobs:
           IMAGE: ghcr.io/jftkcs/urbackup-server@${{ steps.build.outputs.digest }}
         run: |
           docker pull "$IMAGE"
-          docker run --rm --entrypoint sh "$IMAGE" -ec 'test -u "$(command -v urbackup_snapshot_helper)"; command -v zfs; urbackupsrv --version'
+          docker run --rm --entrypoint sh "$IMAGE" -ec 'test -u "$(command -v urbackup_snapshot_helper)"; command -v zfs; version=$(urbackupsrv --version || true); printf "%s\n" "$version" | grep "UrBackup Server v2.5.38.0"'
           docker run -d --name smoke -p 55414:55414 "$IMAGE"
           trap 'docker logs smoke; docker rm -fv smoke' EXIT
           for attempt in $(seq 1 60); do
