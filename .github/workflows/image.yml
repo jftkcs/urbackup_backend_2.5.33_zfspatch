@@ -1,0 +1,46 @@
+name: Image
+on:
+  push:
+    branches: [codex/truenas-2.5]
+    tags: ['2.5.*-zfs.*']
+  workflow_dispatch:
+permissions:
+  contents: read
+  packages: write
+jobs:
+  image:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/build-push-action@v6
+        id: build
+        with:
+          context: .
+          platforms: linux/amd64
+          push: true
+          tags: ghcr.io/jftkcs/urbackup-server:sha-${{ github.sha }}
+      - name: Pull and smoke test
+        env:
+          IMAGE: ghcr.io/jftkcs/urbackup-server@${{ steps.build.outputs.digest }}
+        run: |
+          docker pull "$IMAGE"
+          docker run --rm --entrypoint sh "$IMAGE" -ec 'test -u "$(command -v urbackup_snapshot_helper)"; command -v zfs; urbackupsrv --version'
+          docker run -d --name smoke -p 55414:55414 "$IMAGE"
+          trap 'docker logs smoke; docker rm -fv smoke' EXIT
+          for attempt in $(seq 1 60); do
+            if curl --fail --silent http://localhost:55414/ > /tmp/index.html; then
+              grep -qi urbackup /tmp/index.html
+              exit 0
+            fi
+            sleep 2
+          done
+          exit 1
+      - name: Publish release tag
+        if: startsWith(github.ref, 'refs/tags/')
+        run: docker buildx imagetools create -t ghcr.io/jftkcs/urbackup-server:${{ github.ref_name }} ghcr.io/jftkcs/urbackup-server@${{ steps.build.outputs.digest }}
