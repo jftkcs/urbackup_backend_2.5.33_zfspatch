@@ -105,6 +105,18 @@ std::string handleFilename(std::string fn)
 	return fn;
 }
 
+std::string clientPathComponent(int mode, const std::string& clientname)
+{
+	std::string component = handleFilename(clientname);
+	// Virtual client brackets are invalid in ZFS dataset names; normalization removes literal colons.
+	if (mode == mode_zfs)
+	{
+		component = greplace("[", ":5B", component);
+		component = greplace("]", ":5D", component);
+	}
+	return component;
+}
+
 #ifndef _WIN32
 int exec_wait(const std::string& path, bool keep_stdout, ...)
 {
@@ -637,7 +649,7 @@ int main(int argc, char *argv[])
 			return 1;
 		}
 
-		std::string clientname=handleFilename(argv[3]);
+		std::string clientname=clientPathComponent(mode, argv[3]);
 		std::string name=handleFilename(argv[4]);
 
 		std::string subvolume_folder=backupfolder+os_file_sep()+clientname+os_file_sep()+name;
@@ -652,7 +664,7 @@ int main(int argc, char *argv[])
 			return 1;
 		}
 
-		std::string clientname=handleFilename(argv[3]);
+		std::string clientname=clientPathComponent(mode, argv[3]);
 		std::string name=handleFilename(argv[4]);
 
 		std::string subvolume_folder=backupfolder+os_file_sep()+clientname+os_file_sep()+name;
@@ -667,7 +679,7 @@ int main(int argc, char *argv[])
 			return 1;
 		}
 
-		std::string clientname=handleFilename(argv[3]);
+		std::string clientname=clientPathComponent(mode, argv[3]);
 		std::string src_name=handleFilename(argv[4]);
 		std::string dst_name=handleFilename(argv[5]);
 
@@ -684,7 +696,7 @@ int main(int argc, char *argv[])
 			return 1;
 		}
 
-		std::string clientname=handleFilename(argv[3]);
+		std::string clientname=clientPathComponent(mode, argv[3]);
 		std::string name=handleFilename(argv[4]);
 
 		std::string subvolume_folder=backupfolder+os_file_sep()+clientname+os_file_sep()+name;
@@ -782,7 +794,7 @@ int main(int argc, char *argv[])
 			return 1;
 		}
 
-		std::string clientname=handleFilename(argv[3]);
+		std::string clientname=clientPathComponent(mode, argv[3]);
 		std::string name=handleFilename(argv[4]);
 
 		std::string subvolume_folder=backupfolder+os_file_sep()+clientname+os_file_sep()+name;
@@ -797,7 +809,7 @@ int main(int argc, char *argv[])
 			return 1;
 		}
 		
-		std::string clientname=handleFilename(argv[3]);
+		std::string clientname=clientPathComponent(mode, argv[3]);
 		std::string name=handleFilename(argv[4]);
 
 		std::string subvolume_folder=backupfolder+os_file_sep()+clientname+os_file_sep()+name;
